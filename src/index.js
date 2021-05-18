@@ -1,49 +1,50 @@
-class CountdownTimer {
-  constructor({ selector, targetDate }) {
-    this.targetDate = targetDate;
-    this.start();
-    this.ref = document.querySelector(`${selector}`);
-    this.refs = {
-      days: this.ref.querySelector('span[data-value="days"]'),
-      hours: this.ref.querySelector('span[data-value="hours"]'),
-      minsEl: this.ref.querySelector('span[data-value="mins"]'),
-      secsEl: this.ref.querySelector('span[data-value="secs"]'),
-    };
-  }
+import debounce from 'lodash.debounce';
+import { alert } from '@pnotify/core/dist/PNotify.js';
+import '@pnotify/core/dist/BrightTheme.css';
+import fetchCountries from './js/fetchCountries';
+import countriesListTemplate from './templates/list-template.hbs';
+import countriesCardTemplate from './templates/card-template.hbs';
 
-  calcDeltaTime() {
-    let dateNow = Date.now();
-    let deltaTime = this.targetDate - dateNow;
-    this.calcDays(deltaTime);
-  }
+const refs = {
+  input: document.querySelector('.search-countries'),
+  countryCard: document.querySelector('.country-card-wrapper'),
+};
 
-  calcDays(deltaTime) {
-    const days = this.pad(Math.floor(deltaTime / (1000 * 60 * 60 * 24)));
-    const hours = this.pad(Math.floor((deltaTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
-    const mins = this.pad(Math.floor((deltaTime % (1000 * 60 * 60)) / (1000 * 60)));
-    const secs = this.pad(Math.floor((deltaTime % (1000 * 60)) / 1000));
-    this.updateComponents(days, hours, mins, secs);
-  }
+refs.input.addEventListener('input', debounce(onInputChange, 500));
 
-  updateComponents(days, hours, mins, secs) {
-    this.refs.days.textContent = days;
-    this.refs.hours.textContent = hours;
-    this.refs.minsEl.textContent = mins;
-    this.refs.secsEl.textContent = secs;
-  }
-
-  pad(value) {
-    return value.toString().padStart(2, '0');
-  }
-
-  start() {
-    setInterval(() => {
-      this.calcDeltaTime();
-    }, 1000);
-  }
+function onInputChange(event) {
+  const searchQuery = event.target.value;
+  refs.countryCard.innerHTML = '';
+  return fetchCountries(searchQuery)
+    .then(updatePage)
+    .catch(error => console.log(error));
 }
 
-const timeToIndependenceDay = new CountdownTimer({
-  selector: '#timer-1',
-  targetDate: new Date('Aug 24 2021'),
-});
+function renderCountriesList(countries) {
+  const markup = countriesListTemplate(countries);
+  console.log(markup);
+  refs.countryCard.insertAdjacentHTML('beforeend', markup);
+}
+
+function renderCountryCard(countries) {
+  const markup = countriesCardTemplate(countries[0]);
+  refs.countryCard.insertAdjacentHTML('beforeend', markup);
+}
+
+function muchMoreCountries() {
+  alert({
+    text: 'To many matches found. Please enter a more specific query!',
+  });
+}
+
+function updatePage(result) {
+  if (result.length > 10) {
+    muchMoreCountries();
+    return;
+  }
+  if (result.length >= 2 && result.length <= 10) {
+    renderCountriesList(result);
+    return;
+  }
+  renderCountryCard(result);
+}
