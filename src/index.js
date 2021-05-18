@@ -1,6 +1,8 @@
 import debounce from 'lodash.debounce';
-import { alert } from '@pnotify/core/dist/PNotify.js';
+import { error } from '@pnotify/core/dist/PNotify.js';
 import '@pnotify/core/dist/BrightTheme.css';
+import '@pnotify/core/dist/PNotify.css';
+import './sass/main.scss';
 import fetchCountries from './js/fetchCountries';
 import countriesListTemplate from './templates/list-template.hbs';
 import countriesCardTemplate from './templates/card-template.hbs';
@@ -22,7 +24,6 @@ function onInputChange(event) {
 
 function renderCountriesList(countries) {
   const markup = countriesListTemplate(countries);
-  console.log(markup);
   refs.countryCard.insertAdjacentHTML('beforeend', markup);
 }
 
@@ -32,7 +33,7 @@ function renderCountryCard(countries) {
 }
 
 function muchMoreCountries() {
-  alert({
+  error({
     text: 'To many matches found. Please enter a more specific query!',
   });
 }
